@@ -10,6 +10,7 @@ export default function Navbar() {
     { label: 'Sorting',     path: '/'             },
     { label: 'Searching',   path: '/searching'    },
     { label: 'Pathfinding', path: '/pathfinding'  },
+    { label: 'Stack/Queue', path: '/stack-queue'  },
   ]
 
   return (
