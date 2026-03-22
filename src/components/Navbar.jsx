@@ -7,8 +7,9 @@ export default function Navbar() {
   const location = useLocation()
 
   const tabs = [
-    { label: 'Sorting',   path: '/'          },
-    { label: 'Searching', path: '/searching' },
+    { label: 'Sorting',     path: '/'             },
+    { label: 'Searching',   path: '/searching'    },
+    { label: 'Pathfinding', path: '/pathfinding'  },
   ]
 
   return (
