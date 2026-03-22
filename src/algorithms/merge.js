@@ -5,8 +5,8 @@ export const mergeCode = [
   { id: 3, text: 'mergeSort(arr, l, mid)',         indent: 1 },
   { id: 4, text: 'mergeSort(arr, mid+1, r)',       indent: 1 },
   { id: 5, text: 'merge(l, mid, r):',             indent: 1 },
-  { id: 6, text: 'pick smaller of L[i] / R[j]',   indent: 2 },
-  { id: 7, text: 'place into arr[k]',             indent: 2 },
+  { id: 6, text: 'compare L[i] vs R[j]',          indent: 2 },
+  { id: 7, text: 'place smaller into arr[k]',     indent: 2 },
 ]
 
 export function generateMergeSteps(input) {
@@ -14,36 +14,68 @@ export function generateMergeSteps(input) {
   const arr = [...input]
   const sortedSet = new Set()
 
-  function merge(a, l, mid, r) {
-    const L = a.slice(l, mid + 1)
-    const R = a.slice(mid + 1, r + 1)
+  /*
+    Each step carries:
+      comparing : [i, j]   — the two elements being compared (cyan)
+      swapped   : [k]      — element just placed (purple)
+      sorted    : [...]    — fully sorted indices (green)
+      mid       : [midIdx] — the dividing midpoint bar (orange)
+      range     : [l, r]   — active subarray boundaries (dim highlight)
+  */
+  function push(line, a, comparing, swapped, mid = [], range = []) {
+    steps.push({
+      line,
+      arr:      [...a],
+      comparing,
+      swapped,
+      sorted:   [...sortedSet],
+      mid,
+      range,
+    })
+  }
+
+  function merge(a, l, midIdx, r) {
+    const L = a.slice(l, midIdx + 1)
+    const R = a.slice(midIdx + 1, r + 1)
     let i = 0, j = 0, k = l
-    steps.push({ line: 5, arr: [...a], comparing: [l, r], swapped: [], sorted: [...sortedSet] })
+
+    push(5, a, [], [], [midIdx], [l, r])
+
     while (i < L.length && j < R.length) {
-      steps.push({ line: 6, arr: [...a], comparing: [l + i, mid + 1 + j], swapped: [], sorted: [...sortedSet] })
+      // Show the two elements being compared across the split
+      push(6, a, [l + i, midIdx + 1 + j], [], [midIdx], [l, r])
       a[k++] = L[i] <= R[j] ? L[i++] : R[j++]
-      steps.push({ line: 7, arr: [...a], comparing: [], swapped: [k - 1], sorted: [...sortedSet] })
+      push(7, a, [], [k - 1], [midIdx], [l, r])
     }
-    while (i < L.length) { a[k++] = L[i++]; steps.push({ line: 7, arr: [...a], comparing: [], swapped: [k - 1], sorted: [...sortedSet] }) }
-    while (j < R.length) { a[k++] = R[j++]; steps.push({ line: 7, arr: [...a], comparing: [], swapped: [k - 1], sorted: [...sortedSet] }) }
+    while (i < L.length) {
+      a[k++] = L[i++]
+      push(7, a, [], [k - 1], [midIdx], [l, r])
+    }
+    while (j < R.length) {
+      a[k++] = R[j++]
+      push(7, a, [], [k - 1], [midIdx], [l, r])
+    }
     for (let x = l; x <= r; x++) sortedSet.add(x)
   }
 
   function ms(a, l, r) {
-    steps.push({ line: 0, arr: [...a], comparing: [l, r], swapped: [], sorted: [...sortedSet] })
+    push(0, a, [], [], [], [l, r])
     if (l >= r) {
-      steps.push({ line: 1, arr: [...a], comparing: [l], swapped: [], sorted: [...sortedSet] })
+      push(1, a, [l], [], [], [l, r])
       if (l === r) sortedSet.add(l)
       return
     }
-    const mid = Math.floor((l + r) / 2)
-    steps.push({ line: 2, arr: [...a], comparing: [l, mid, r], swapped: [], sorted: [...sortedSet] })
-    steps.push({ line: 3, arr: [...a], comparing: [], swapped: [], sorted: [...sortedSet] }); ms(a, l, mid)
-    steps.push({ line: 4, arr: [...a], comparing: [], swapped: [], sorted: [...sortedSet] }); ms(a, mid + 1, r)
-    merge(a, l, mid, r)
+    const midIdx = Math.floor((l + r) / 2)
+    push(2, a, [], [], [midIdx], [l, r])  // mid bar = orange
+    push(3, a, [], [], [midIdx], [l, midIdx]); ms(a, l, midIdx)
+    push(4, a, [], [], [midIdx], [midIdx + 1, r]); ms(a, midIdx + 1, r)
+    merge(a, l, midIdx, r)
   }
 
   ms(arr, 0, arr.length - 1)
-  steps.push({ line: -1, arr: [...arr], comparing: [], swapped: [], sorted: arr.map((_, i) => i) })
+  steps.push({
+    line: -1, arr: [...arr], comparing: [], swapped: [],
+    sorted: arr.map((_, i) => i), mid: [], range: [],
+  })
   return steps
 }

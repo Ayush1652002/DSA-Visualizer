@@ -20,6 +20,7 @@ export default function Controls({
   maxSize,
   onStartPause,
   onNextStep,
+  onPrevStep,
   onReset,
   onSizeChange,
   onSpeedChange,
@@ -51,6 +52,16 @@ export default function Controls({
           }}
         >
           {primaryLabel}
+        </button>
+
+        {/* Prev step */}
+        <button
+          onClick={onPrevStep}
+          disabled={stepIdx === 0}
+          className="px-4 py-2 rounded-lg text-xs font-semibold font-mono tracking-wide border border-white/10 text-slate-400 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{ background: 'transparent', cursor: stepIdx === 0 ? 'not-allowed' : 'pointer' }}
+        >
+          ← Prev
         </button>
 
         {/* Next step */}

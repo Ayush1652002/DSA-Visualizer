@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Bars       from '../components/Bars.jsx'
 import CodeViewer from '../components/CodeViewer.jsx'
 import Controls   from '../components/Controls.jsx'
+import AlgoHint   from '../components/AlgoHint.jsx'
 import { bubbleCode,    generateBubbleSteps    } from '../algorithms/bubble.js'
 import { selectionCode, generateSelectionSteps } from '../algorithms/selection.js'
 import { insertionCode, generateInsertionSteps } from '../algorithms/insertion.js'
@@ -52,7 +53,8 @@ export default function Sorting() {
 
   const algo        = ALGORITHMS[algoKey]
   const currentStep = steps[stepIdx] ?? {
-    arr: baseArr, comparing: [], swapped: [], sorted: [], line: -2,
+    arr: baseArr, comparing: [], swapped: [], sorted: [],
+    pivot: [], boundary: [], mid: [], range: [], line: -2,
   }
 
   useEffect(() => {
@@ -92,6 +94,11 @@ export default function Sorting() {
       return next
     })
   }, [running, steps.length])
+  const handlePrevStep       = useCallback(() => {
+    if (running) setRunning(false)
+    setFinished(false)
+    setStepIdx((prev) => Math.max(prev - 1, 0))
+  }, [running])
   const handleReset          = useCallback(() => {
     stop(); setBaseArr(makeArray(arraySize)); setCustomInput(''); setInputError('')
   }, [arraySize, stop])
@@ -142,18 +149,6 @@ export default function Sorting() {
           <span className="hidden sm:inline text-xs text-slate-600">— DSA Visualizer</span>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {[
-            { label: 'Comparing', color: '#22d3ee', count: comparingCount },
-            { label: 'Swapping',  color: '#c084fc', count: swappedCount   },
-            { label: 'Sorted',    color: '#4ade80', count: sortedCount    },
-          ].map(({ label, color, count }) => (
-            <div key={label} className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-sm shrink-0"
-                style={{ background: color, boxShadow: `0 0 5px ${color}` }} />
-              <span className="text-xs text-slate-500 hidden sm:inline">{label}</span>
-              <span className="text-xs font-bold" style={{ color }}>{count}</span>
-            </div>
-          ))}
           <span className="text-xs text-slate-500 hidden md:block">
             Step <strong className="text-slate-300">{stepIdx}</strong>
             <span className="text-slate-700"> / {steps.length - 1}</span>
@@ -185,7 +180,7 @@ export default function Sorting() {
         arraySize={arraySize} speedKey={speedKey} accentColor={algo.color}
         customInput={customInput} inputError={inputError}
         minSize={MIN_SIZE} maxSize={MAX_SIZE}
-        onStartPause={handleStartPause} onNextStep={handleNextStep}
+        onStartPause={handleStartPause} onNextStep={handleNextStep} onPrevStep={handlePrevStep}
         onReset={handleReset} onSizeChange={handleSizeChange}
         onSpeedChange={setSpeedKey} onCustomInputChange={setCustomInput}
         onUseCustomInput={handleUseCustomInput} onGenerateRandom={handleGenerateRandom}
@@ -225,32 +220,63 @@ export default function Sorting() {
             minHeight: 0,
           }}
         >
+          {/* Hint bar — plain English description of current step (Quick + Merge only) */}
+          <AlgoHint algoKey={algoKey} step={currentStep} />
+
           {/* Bar card */}
           <div style={{ flex: 1, padding: isDesktop ? 16 : 12, overflow: 'hidden', minHeight: 0 }}>
             <div
               className="rounded-xl border border-white/10 bg-white/5"
-              style={{ width: '100%', height: '100%', padding: 12, boxSizing: 'border-box' }}
+              style={{ width: '100%', height: '100%', padding: 12, boxSizing: 'border-box', overflow: 'hidden' }}
             >
               <Bars
                 arr={currentStep.arr}
                 comparing={currentStep.comparing ?? []}
                 swapped={currentStep.swapped     ?? []}
                 sorted={currentStep.sorted       ?? []}
+                pivot={currentStep.pivot         ?? []}
+                boundary={currentStep.boundary   ?? []}
+                mid={currentStep.mid             ?? []}
+                range={currentStep.range         ?? []}
                 algoKey={algoKey}
                 accentColor={algo.color}
               />
             </div>
           </div>
 
-          {/* Footer */}
+          {/* Footer — color legend */}
           <div
-            className="flex flex-wrap items-center gap-4 border-t border-white/10 bg-white/5 text-xs font-mono text-slate-600"
-            style={{ padding: '8px 20px', flexShrink: 0 }}
+            className="flex items-center border-t border-white/10 bg-white/5 shrink-0 flex-wrap"
+            style={{ padding: '8px 16px', gap: '20px' }}
           >
-            <span>n = <strong className="text-slate-400">{currentStep.arr?.length ?? arraySize}</strong></span>
-            <span>line = <strong style={{ color: algo.color }}>{currentStep.line >= 0 ? currentStep.line + 1 : '—'}</strong></span>
-            <span>steps = <strong className="text-slate-400">{steps.length - 1}</strong></span>
-            {finished && <span className="font-bold ml-auto text-green-400">✓ Sorted!</span>}
+            {(algoKey === 'quick'
+              ? [
+                  { color: '#facc15', label: 'Pivot' },
+                  { color: '#22d3ee', label: 'Scanning' },
+                  { color: '#4ade80', label: 'Sorted' },
+                ]
+              : algoKey === 'merge'
+              ? [
+                  { color: '#facc15', label: 'Mid point' },
+                  { color: '#22d3ee', label: 'Comparing' },
+                  { color: '#4ade80', label: 'Sorted' },
+                ]
+              : [
+                  { color: '#22d3ee', label: 'Comparing' },
+                  { color: '#c084fc', label: 'Swapping' },
+                  { color: '#4ade80', label: 'Sorted' },
+                ]
+            ).map(({ color, label }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: color, boxShadow: `0 0 6px ${color}`, flexShrink: 0, display: 'inline-block' }} />
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>{label}</span>
+              </div>
+            ))}
+
+            <span style={{ marginLeft: 'auto', fontSize: 11, color: '#475569', fontFamily: 'monospace' }}>
+              step <strong style={{ color: '#64748b' }}>{stepIdx}</strong> / {steps.length - 1}
+            </span>
+            {finished && <span style={{ fontSize: 12, fontWeight: 700, color: '#4ade80' }}>✓ Sorted!</span>}
           </div>
         </div>
 
