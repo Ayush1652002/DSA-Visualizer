@@ -11,6 +11,7 @@ export default function Navbar() {
     { label: 'Searching',   path: '/searching'    },
     { label: 'Pathfinding', path: '/pathfinding'  },
     { label: 'Stack/Queue', path: '/stack-queue'  },
+    { label: 'Graph',       path: '/graph'        },
   ]
 
   return (

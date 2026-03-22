@@ -91,26 +91,27 @@ export default function Bars({
     const naturalX   = xOf(idx)
     const naturalH   = Math.max(2, (arr[idx] / max) * h)
     const naturalTop = h - naturalH
+    const naturalVal = arr[idx]
 
     const isAnimating = phase !== 'idle' && (idx === pA || idx === pB)
-    if (!isAnimating) return { left: naturalX, top: naturalTop, height: naturalH }
+    if (!isAnimating) return { left: naturalX, top: naturalTop, height: naturalH, displayVal: naturalVal }
 
-    const prev  = prevPositions.current[idx]
-    const fromX = prev?.x ?? naturalX
-    // Freeze height at original value during lift+slide so bar doesn't change size mid-air
-    const frozenH   = prev ? Math.max(2, (prev.val / max) * h) : naturalH
+    const prev     = prevPositions.current[idx]
+    const fromX    = prev?.x   ?? naturalX
+    const frozenVal = prev?.val ?? naturalVal
+    const frozenH   = Math.max(2, (frozenVal / max) * h)
     const frozenTop = h - frozenH
 
     if (phase === 'lift') {
-      return { left: fromX,    top: frozenTop - LIFT, height: frozenH }
+      return { left: fromX,    top: frozenTop - LIFT, height: frozenH, displayVal: frozenVal }
     }
     if (phase === 'slide') {
-      return { left: naturalX, top: frozenTop - LIFT, height: frozenH }
+      return { left: naturalX, top: frozenTop - LIFT, height: frozenH, displayVal: frozenVal }
     }
     if (phase === 'drop') {
-      return { left: naturalX, top: naturalTop,       height: naturalH }
+      return { left: naturalX, top: frozenTop,        height: frozenH, displayVal: frozenVal }
     }
-    return { left: naturalX, top: naturalTop, height: naturalH }
+    return { left: naturalX, top: naturalTop, height: naturalH, displayVal: naturalVal }
   }
 
   function getColor(idx) {
@@ -129,11 +130,11 @@ export default function Bars({
         const isPiv  = idx === pivotIdx || idx === midIdx
         const isAnim = phase !== 'idle' && (idx === pA || idx === pB)
         const isDrop = phase === 'drop'  && (idx === pA || idx === pB)
-        const { left, top, height } = getPos(idx)
+        const { left, top, height, displayVal } = getPos(idx)
 
         const transition = isDrop
-          ? 'top 160ms cubic-bezier(0.34,1.5,0.64,1), height 150ms ease, background 120ms ease, box-shadow 120ms ease'
-          : 'left 200ms linear, top 160ms cubic-bezier(0.34,1.5,0.64,1), height 150ms ease, background 120ms ease, box-shadow 120ms ease'
+          ? 'top 160ms cubic-bezier(0.34,1.5,0.64,1), background 120ms ease, box-shadow 120ms ease'
+          : 'left 200ms linear, top 160ms cubic-bezier(0.34,1.5,0.64,1), background 120ms ease, box-shadow 120ms ease'
 
         const labelColor = isSwap ? PURPLE : isPiv ? YELLOW : color ? color : '#334155'
         const showLabel  = barW >= 12
@@ -165,7 +166,7 @@ export default function Bars({
                 userSelect: 'none',
                 pointerEvents: 'none',
               }}>
-                {val}
+                {displayVal}
               </div>
             )}
 
@@ -184,7 +185,7 @@ export default function Bars({
                             : 'none',
                 borderRadius: '6px 6px 0 0',
                 boxSizing:    'border-box',
-                transition:   'height 150ms ease, background 120ms ease, box-shadow 120ms ease',
+                transition:   'background 120ms ease, box-shadow 120ms ease',
               }}
             />
           </div>
