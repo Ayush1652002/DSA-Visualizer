@@ -122,7 +122,7 @@ export default function Searching() {
     setArrErr('')
   }
 
-  function useCustomArr() {
+  function applyCustomArr() {
     if (!customArr.trim()) { setArrErr('Enter numbers first'); return }
     const parsed = customArr.split(',')
       .map(s => parseInt(s.trim(), 10))
@@ -285,13 +285,13 @@ export default function Searching() {
               type="text"
               value={customArr}
               onChange={e => setCustomArr(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && useCustomArr()}
+              onKeyDown={e => e.key === 'Enter' && applyCustomArr()}
               placeholder="Enter your own array e.g. 5, 3, 8, 1, 9, 2"
               className="flex-1 min-w-0 bg-transparent text-xs font-mono text-slate-200 outline-none placeholder-slate-700"
             />
           </div>
           <div className="flex gap-2">
-            <button onClick={useCustomArr}
+            <button onClick={applyCustomArr}
               className="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-mono font-semibold border border-white/10 text-slate-400 bg-white/5 whitespace-nowrap"
               style={{ cursor: 'pointer' }}>
               Use Input
