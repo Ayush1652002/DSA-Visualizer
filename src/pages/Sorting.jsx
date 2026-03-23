@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Navbar    from '../components/Navbar.jsx'
 import Bars       from '../components/Bars.jsx'
 import CodeViewer from '../components/CodeViewer.jsx'
 import Controls   from '../components/Controls.jsx'
@@ -39,9 +40,9 @@ function useIsDesktop() {
 
 export default function Sorting() {
   const [algoKey,     setAlgoKey]     = useState('bubble')
-  const [arraySize,   setArraySize]   = useState(28)
+  const [arraySize,   setArraySize]   = useState(13)
   const [speedKey,    setSpeedKey]    = useState('medium')
-  const [baseArr,     setBaseArr]     = useState(() => makeArray(28))
+  const [baseArr,     setBaseArr]     = useState(() => makeArray(13))
   const [steps,       setSteps]       = useState([])
   const [stepIdx,     setStepIdx]     = useState(0)
   const [running,     setRunning]     = useState(false)
@@ -128,7 +129,7 @@ export default function Sorting() {
   // Code panel: 260px wide on desktop (sidebar), 200px tall on mobile (top strip)
   const codePanelStyle = isDesktop
     ? { width: 260, height: '100%', flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.1)' }
-    : { width: '100%', height: 200, flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)' }
+    : { width: '100%', height: 140, flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)' }
 
   return (
     // position:fixed + inset:0 gives a guaranteed concrete pixel height so
@@ -137,27 +138,12 @@ export default function Sorting() {
       className="flex flex-col bg-[#060d1b] text-slate-200 font-sans"
       style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}
     >
+      {/* ── Row 1: Same navbar as all other pages ─────────────── */}
+      <Navbar />
 
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="flex flex-wrap items-center justify-between gap-3 px-4 md:px-6 py-3 bg-white/5 border-b border-white/10 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ background: algo.color, boxShadow: `0 0 10px ${algo.color}` }} />
-          <span className="text-sm font-bold tracking-widest uppercase">
-            Sort<span style={{ color: algo.color }}>Lab</span>
-          </span>
-          <span className="hidden sm:inline text-xs text-slate-600">— DSA Visualizer</span>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xs text-slate-500 hidden md:block">
-            Step <strong className="text-slate-300">{stepIdx}</strong>
-            <span className="text-slate-700"> / {steps.length - 1}</span>
-          </span>
-        </div>
-      </header>
-
-      {/* ── Algorithm tabs ─────────────────────────────────────── */}
-      <div className="flex shrink-0 overflow-x-auto bg-white/[0.03] border-b border-white/10">
+      {/* ── Row 2: Algo tabs + step counter ────────────────────── */}
+      <div className="flex shrink-0 bg-white/[0.03] border-b border-white/10"
+        style={{ overflowX: 'auto', overflowY: 'hidden' }}>
         {Object.entries(ALGORITHMS).map(([key, a]) => (
           <button key={key} onClick={() => handleAlgoChange(key)}
             className="px-4 md:px-5 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap shrink-0 transition-all duration-200"
@@ -171,6 +157,11 @@ export default function Sorting() {
             {a.name}
           </button>
         ))}
+        <div style={{ flex: 1 }} />
+        <span className="text-xs text-slate-500 hidden md:flex items-center px-4">
+          step <strong className="text-slate-300 mx-1">{stepIdx}</strong>
+          <span className="text-slate-700">/ {steps.length - 1}</span>
+        </span>
       </div>
 
       {/* ── Controls ───────────────────────────────────────────── */}
@@ -224,7 +215,7 @@ export default function Sorting() {
           <AlgoHint algoKey={algoKey} step={currentStep} />
 
           {/* Bar card */}
-          <div style={{ flex: 1, padding: isDesktop ? 16 : 12, overflow: 'hidden', minHeight: 0 }}>
+          <div style={{ flex: 1, padding: isDesktop ? 16 : 6, overflow: 'hidden', minHeight: isDesktop ? 0 : 220 }}>
             <div
               className="rounded-xl border border-white/10 bg-white/5"
               style={{ width: '100%', height: '100%', padding: 12, boxSizing: 'border-box', overflow: 'hidden' }}
@@ -247,7 +238,7 @@ export default function Sorting() {
           {/* Footer — color legend */}
           <div
             className="flex items-center border-t border-white/10 bg-white/5 shrink-0 flex-wrap"
-            style={{ padding: '8px 16px', gap: '20px' }}
+            style={{ padding: '0 16px', gap: '16px', height: 36, minHeight: 36, maxHeight: 36, overflow: 'hidden' }}
           >
             {(algoKey === 'quick'
               ? [

@@ -15,39 +15,52 @@ export default function Navbar() {
   ]
 
   return (
-    <nav
-      className="flex items-center shrink-0 border-b border-white/10"
-      style={{ background: 'rgba(4,9,18,0.95)', height: 40 }}
-    >
-      {/* Brand */}
-      <div className="flex items-center gap-2 px-4 border-r border-white/10 h-full shrink-0">
-        <div className="w-2 h-2 rounded-full"
-          style={{ background: ACCENT, boxShadow: `0 0 8px ${ACCENT}` }} />
-        <span className="text-xs font-bold tracking-widest uppercase text-slate-200">
+    <nav style={{
+      display: 'flex', alignItems: 'center', flexShrink: 0,
+      borderBottom: '1px solid rgba(255,255,255,0.08)',
+      background: 'rgba(4,9,18,0.95)', height: 40,
+      overflow: 'hidden',
+    }}>
+      {/* Brand — pinned left */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '0 14px',
+        borderRight: '1px solid rgba(255,255,255,0.08)',
+        height: '100%', flexShrink: 0,
+      }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT, boxShadow: `0 0 6px ${ACCENT}` }} />
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#e2e8f0' }}>
           DSA<span style={{ color: ACCENT }}>Lab</span>
         </span>
       </div>
 
-      {/* Tabs */}
-      {tabs.map(tab => {
-        const active = location.pathname === tab.path
-        return (
-          <button
-            key={tab.path}
-            onClick={() => navigate(tab.path)}
-            className="px-5 h-full text-xs font-semibold tracking-wide transition-all duration-200"
-            style={{
-              border:       'none',
-              borderBottom: `2px solid ${active ? ACCENT : 'transparent'}`,
-              background:   active ? `${ACCENT}12` : 'transparent',
-              color:        active ? ACCENT : '#4b5563',
-              cursor:       'pointer',
-            }}
-          >
-            {tab.label}
-          </button>
-        )
-      })}
+      {/* Scrollable tabs */}
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        overflowX: 'auto', overflowY: 'hidden',
+        flex: 1, height: '100%',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none', msOverflowStyle: 'none',
+      }}>
+        {tabs.map(tab => {
+          const active = location.pathname === tab.path
+          return (
+            <button key={tab.path} onClick={() => navigate(tab.path)}
+              style={{
+                padding: '0 14px', height: '100%',
+                fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+                border: 'none', flexShrink: 0,
+                borderBottom: `2px solid ${active ? ACCENT : 'transparent'}`,
+                background: active ? `${ACCENT}12` : 'transparent',
+                color: active ? ACCENT : '#4b5563',
+                cursor: 'pointer',
+                touchAction: 'manipulation',
+              }}>
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
     </nav>
   )
 }

@@ -1,67 +1,71 @@
-// Cell.jsx — single grid cell
-// Supports: distance-based opacity for BFS wave, direction arrow for visited cells
+// Cell.jsx — clean 3-color system for pathfinding
+// 🟢 Green  = Start
+// 🔴 Red    = End
+// ⬛ Dark   = Wall (visible but not distracting)
+// 🔵 Cyan   = Visited / Frontier
+// 🟡 Yellow = Path (final result)
+// ⬜ Navy   = Empty
 
-const START_COLOR    = '#22d3ee'
-const END_COLOR      = '#fb7185'
-const FRONTIER_COLOR = '#22d3ee'
-const PATH_COLOR     = '#4ade80'
-const VISITED_BASE   = '#0f2d4a'
-
-// Direction arrow characters
 const ARROWS = { up: '↑', down: '↓', left: '←', right: '→' }
 
 export default function Cell({ type, size, onMouseDown, onMouseEnter, tooltip, distRatio, direction }) {
-  let background, border, boxShadow, content
+  let background, border, boxShadow, textColor
 
   switch (type) {
-    case 'wall':
-      background = 'linear-gradient(135deg, #0a0f1a, #0f1520)'
-      border     = '1px solid #0f1520'
+    case 'empty':
+      background = '#0d1b2e'
+      border     = '1px solid rgba(255,255,255,0.06)'
       boxShadow  = 'none'
+      textColor  = 'transparent'
+      break
+
+    case 'wall':
+      background = '#1a1a2e'
+      border     = '1px solid #2a2a4a'
+      boxShadow  = 'none'
+      textColor  = 'transparent'
       break
 
     case 'start':
-      background = `linear-gradient(135deg, ${START_COLOR}cc, ${START_COLOR})`
-      border     = `1px solid ${START_COLOR}`
-      boxShadow  = `0 0 10px ${START_COLOR}99`
+      background = 'linear-gradient(135deg, #4ade80bb, #4ade80)'
+      border     = '2px solid #4ade80'
+      boxShadow  = '0 0 14px #4ade8088'
+      textColor  = 'transparent'
       break
 
     case 'end':
-      background = `linear-gradient(135deg, ${END_COLOR}cc, ${END_COLOR})`
-      border     = `1px solid ${END_COLOR}`
-      boxShadow  = `0 0 10px ${END_COLOR}99`
+      background = 'linear-gradient(135deg, #fb7185bb, #fb7185)'
+      border     = '2px solid #fb7185'
+      boxShadow  = '0 0 14px #fb718588'
+      textColor  = 'transparent'
       break
 
     case 'frontier':
-      background = `linear-gradient(to top, ${FRONTIER_COLOR}66, ${FRONTIER_COLOR})`
-      border     = `1px solid ${FRONTIER_COLOR}`
-      boxShadow  = `0 0 10px ${FRONTIER_COLOR}88`
+      background = 'linear-gradient(135deg, #22d3ee88, #22d3ee)'
+      border     = '1px solid #22d3ee'
+      boxShadow  = '0 0 10px #22d3ee88'
+      textColor  = 'transparent'
+      break
+
+    case 'visited':
+      background = '#0f2d4a'
+      border     = '1px solid rgba(34,211,238,0.15)'
+      boxShadow  = 'none'
+      textColor  = direction && size >= 18 ? 'rgba(34,211,238,0.4)' : 'transparent'
       break
 
     case 'path':
-      background = `linear-gradient(to top, ${PATH_COLOR}88, ${PATH_COLOR})`
-      border     = `1px solid ${PATH_COLOR}`
-      boxShadow  = `0 0 8px ${PATH_COLOR}88`
+      background = 'linear-gradient(135deg, #facc1588, #facc15)'
+      border     = '1px solid #facc15'
+      boxShadow  = '0 0 10px #facc1566'
+      textColor  = 'transparent'
       break
-
-    case 'visited': {
-      // BFS wave: distRatio 0 = close to start (darker), 1 = far (lighter)
-      const ratio   = distRatio ?? 0.5
-      const opacity = 0.25 + ratio * 0.55   // range 0.25 → 0.80
-      background = `rgba(15, 45, 74, ${opacity})`
-      border     = `1px solid rgba(30, 58, 95, ${opacity * 0.8})`
-      boxShadow  = 'none'
-      // Direction arrow for visited cells
-      if (direction && size >= 18) {
-        content = ARROWS[direction]
-      }
-      break
-    }
 
     default:
       background = '#0d1b2e'
-      border     = '1px solid rgba(30, 58, 95, 0.13)'
+      border     = '1px solid rgba(255,255,255,0.06)'
       boxShadow  = 'none'
+      textColor  = 'transparent'
   }
 
   return (
@@ -70,27 +74,26 @@ export default function Cell({ type, size, onMouseDown, onMouseEnter, tooltip, d
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       style={{
-        width:        size,
-        height:       size,
+        width:          size,
+        height:         size,
         background,
         border,
-        borderRadius: size > 18 ? 4 : 2,
-        boxSizing:    'border-box',
-        cursor:       'pointer',
-        flexShrink:   0,
+        borderRadius:   size > 20 ? 6 : size > 14 ? 4 : 2,
+        boxSizing:      'border-box',
+        cursor:         'pointer',
+        flexShrink:     0,
         boxShadow,
-        transition:   'background 80ms ease, box-shadow 80ms ease',
-        userSelect:   'none',
-        display:      'flex',
-        alignItems:   'center',
+        transition:     'background 80ms ease, box-shadow 80ms ease',
+        userSelect:     'none',
+        display:        'flex',
+        alignItems:     'center',
         justifyContent: 'center',
-        fontSize:     size * 0.45,
-        color:        'rgba(34, 211, 238, 0.5)',
-        fontWeight:   700,
-        pointerEvents: 'auto',
+        fontSize:       size * 0.42,
+        color:          textColor,
+        fontWeight:     700,
       }}
     >
-      {content}
+      {type === 'visited' && direction && size >= 18 ? ARROWS[direction] ?? '' : ''}
     </div>
   )
 }

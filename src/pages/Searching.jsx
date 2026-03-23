@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { linearCode, generateLinearSteps } from '../algorithms/Searching/linear.js'
-import { binaryCode, generateBinarySteps } from '../algorithms/Searching/binary.js'
+import { linearCode, generateLinearSteps } from '../algorithms/searching/linear.js'
+import { binaryCode, generateBinarySteps } from '../algorithms/searching/binary.js'
 import CodeViewer from '../components/CodeViewer.jsx'
 
 // ── Colors ────────────────────────────────────────────────────────
 const CYAN   = '#22d3ee'   // current index being checked
 const PURPLE = '#a78bfa'   // mid pointer (binary)
 const GREEN  = '#4ade80'   // found
-const DIMMED = '#0f2d40'   // out of search range
+const DIMMED = '#0d1b2e'   // same as default bar color — not too dark
 
 const SPEEDS = { slow: 700, medium: 250, fast: 60 }
 
@@ -33,7 +33,7 @@ const ALGORITHMS = {
 
 export default function Searching() {
   const [algoKey,   setAlgoKey]   = useState('linear')
-  const [rawArr,    setRawArr]    = useState(() => makeArray(16))
+  const [rawArr,    setRawArr]    = useState(() => makeArray(13))
   const [steps,     setSteps]     = useState([])
   const [stepIdx,   setStepIdx]   = useState(0)
   const [running,   setRunning]   = useState(false)
@@ -41,6 +41,8 @@ export default function Searching() {
   const [target,    setTarget]    = useState('')
   const [speedKey,  setSpeedKey]  = useState('medium')
   const [inputErr,  setInputErr]  = useState('')
+  const [customArr, setCustomArr] = useState('')
+  const [arrErr,    setArrErr]    = useState('')
   const timerRef  = useRef(null)
   const isDesktop = useIsDesktop()
 
@@ -116,6 +118,20 @@ export default function Searching() {
   function generateNew() {
     resetAll()
     setRawArr(makeArray(16))
+    setCustomArr('')
+    setArrErr('')
+  }
+
+  function useCustomArr() {
+    if (!customArr.trim()) { setArrErr('Enter numbers first'); return }
+    const parsed = customArr.split(',')
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => !isNaN(n) && n > 0 && n <= 999)
+    if (parsed.length < 2)  { setArrErr('Enter at least 2 numbers (1–999)'); return }
+    if (parsed.length > 30) { setArrErr('Max 30 values allowed'); return }
+    setArrErr('')
+    resetAll()
+    setRawArr(parsed)
   }
 
   // ── Bar coloring ──────────────────────────────────────────────
@@ -240,15 +256,6 @@ export default function Searching() {
             Next →
           </button>
 
-          {/* Generate new */}
-          <button
-            onClick={generateNew}
-            className="px-4 py-2 rounded-lg text-xs font-semibold font-mono border border-white/10 text-slate-500 transition-all duration-200"
-            style={{ background: 'transparent', cursor: 'pointer' }}
-          >
-            ↺ New Array
-          </button>
-
           <div className="flex-1" />
 
           {/* Speed */}
@@ -267,7 +274,38 @@ export default function Searching() {
           </div>
         </div>
 
-        {/* Row 2: progress bar */}
+        {/* Row 2: Custom array input */}
+        <div className="flex flex-col sm:flex-row items-stretch gap-2">
+          <div
+            className="flex-1 flex items-center gap-2 rounded-lg px-3 py-2 bg-white/5"
+            style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <span className="text-xs font-mono text-slate-600 shrink-0 tracking-widest uppercase">arr[]</span>
+            <input
+              type="text"
+              value={customArr}
+              onChange={e => setCustomArr(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && useCustomArr()}
+              placeholder="Enter your own array e.g. 5, 3, 8, 1, 9, 2"
+              className="flex-1 min-w-0 bg-transparent text-xs font-mono text-slate-200 outline-none placeholder-slate-700"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={useCustomArr}
+              className="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-mono font-semibold border border-white/10 text-slate-400 bg-white/5 whitespace-nowrap"
+              style={{ cursor: 'pointer' }}>
+              Use Input
+            </button>
+            <button onClick={generateNew}
+              className="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-mono font-bold whitespace-nowrap"
+              style={{ background: `${algo.color}1a`, color: algo.color, border: `1px solid ${algo.color}44`, cursor: 'pointer' }}>
+              Generate Array
+            </button>
+          </div>
+        </div>
+        {arrErr && <p className="text-xs font-mono text-red-400">⚠ {arrErr}</p>}
+
+        {/* Row 3: progress bar */}
         {steps.length > 0 && (
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono text-slate-600 w-8 text-right shrink-0">{progress}%</span>
@@ -383,8 +421,7 @@ function SearchBars({ arr, getColor, max }) {
   const offsetX = (w - totalW) / 2
 
   function barBg(color) {
-    if (!color) return 'linear-gradient(to top, #0d1f3c, #163354)'
-    if (color === DIMMED) return 'linear-gradient(to top, #0a1a2a, #0f2040)'
+    if (!color || color === DIMMED) return 'linear-gradient(to top, #0d1f3c, #163354)'
     return `linear-gradient(to top, ${color}88, ${color})`
   }
 

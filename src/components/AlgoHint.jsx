@@ -1,11 +1,90 @@
 // AlgoHint.jsx
 // Shows a plain-English sentence describing what is happening RIGHT NOW.
-// Only renders for 'quick' and 'merge'. Zero impact on other algorithms.
 
 const CYAN   = '#22d3ee'
 const YELLOW = '#facc15'
 const GREEN  = '#4ade80'
 const PURPLE = '#c084fc'
+
+// ── Bubble Sort hint ──────────────────────────────────────────────────
+function bubbleHint(step) {
+  const { line, arr, comparing, swapped } = step
+  const [ci, cj] = comparing ?? []
+  const [si, sj] = swapped   ?? []
+  const va = ci >= 0 && arr ? arr[ci] : null
+  const vb = cj >= 0 && arr ? arr[cj] : null
+
+  if (line === -1) return { text: 'Array is fully sorted!', color: GREEN }
+  if (line === 0)  return { text: 'Outer loop — starting a new pass through the array', color: CYAN }
+  if (line === 1)  return { text: `Inner loop — comparing adjacent elements`, color: CYAN }
+  if (line === 2) {
+    if (va !== null && vb !== null)
+      return va > vb
+        ? { text: `${va} > ${vb} — out of order, swap them!`, color: PURPLE }
+        : { text: `${va} ≤ ${vb} — already in order, no swap needed`, color: CYAN }
+    return { text: 'Comparing adjacent bars…', color: CYAN }
+  }
+  if (line === 3) {
+    const a = arr?.[si], b = arr?.[sj]
+    return { text: `Swapping ${b} ↔ ${a} — larger bubble moves right`, color: PURPLE }
+  }
+  if (line === 4)  return { text: 'Largest unsorted element is now in its final position ✓', color: GREEN }
+  return { text: 'Running…', color: CYAN }
+}
+
+// ── Selection Sort hint ───────────────────────────────────────────────
+function selectionHint(step) {
+  const { line, arr, comparing, swapped } = step
+  const [ci, minI] = comparing ?? []
+  const [si, sj]   = swapped   ?? []
+  const cv   = ci   >= 0 && arr ? arr[ci]   : null
+  const minV = minI >= 0 && arr ? arr[minI] : null
+
+  if (line === -1) return { text: 'Array is fully sorted!', color: GREEN }
+  if (line === 0)  return { text: 'Outer loop — finding minimum for current position', color: CYAN }
+  if (line === 1)  return { text: `Assuming current position is the minimum`, color: CYAN }
+  if (line === 2)  return { text: 'Scanning remaining unsorted elements', color: CYAN }
+  if (line === 3) {
+    if (cv !== null && minV !== null)
+      return cv < minV
+        ? { text: `${cv} < ${minV} (current min) — found a smaller element!`, color: YELLOW }
+        : { text: `${cv} ≥ ${minV} (current min) — not smaller, continue`, color: CYAN }
+    return { text: 'Checking if this element is smaller than current minimum…', color: CYAN }
+  }
+  if (line === 4)  return { text: `New minimum found — updating minimum index`, color: YELLOW }
+  if (line === 5) {
+    const a = arr?.[si], b = arr?.[sj]
+    return { text: `Swapping minimum ${a} to its correct position`, color: PURPLE }
+  }
+  if (line === 6)  return { text: 'Element placed in its final sorted position ✓', color: GREEN }
+  return { text: 'Running…', color: CYAN }
+}
+
+// ── Insertion Sort hint ───────────────────────────────────────────────
+function insertionHint(step) {
+  const { line, arr, comparing, swapped } = step
+  const [ci, cj] = comparing ?? []
+  const [si, sj] = swapped   ?? []
+  const va = ci >= 0 && arr ? arr[ci] : null
+  const vb = cj >= 0 && arr ? arr[cj] : null
+
+  if (line === -1) return { text: 'Array is fully sorted!', color: GREEN }
+  if (line === 0)  return { text: 'Outer loop — picking next element to insert', color: CYAN }
+  if (line === 1)  return { text: `Picking key element to insert into sorted portion`, color: YELLOW }
+  if (line === 2)  return { text: 'Starting from the element just before key', color: CYAN }
+  if (line === 3) {
+    if (va !== null && vb !== null)
+      return va > vb
+        ? { text: `${va} > ${vb} — element is larger than key, shift it right`, color: PURPLE }
+        : { text: `Found correct position — key is larger, stop shifting`, color: CYAN }
+    return { text: 'Checking if we need to shift more…', color: CYAN }
+  }
+  if (line === 4)  return { text: 'Shifting element one position right to make room', color: PURPLE }
+  if (line === 5)  return { text: 'Moving one position left to continue checking', color: CYAN }
+  if (line === 6)  return { text: 'Key inserted at its correct sorted position ✓', color: GREEN }
+  if (line === 7)  return { text: 'Left portion is now sorted up to this index', color: GREEN }
+  return { text: 'Running…', color: CYAN }
+}
 
 // ── Quick Sort hint ───────────────────────────────────────────────────
 function quickHint(step) {
@@ -78,20 +157,33 @@ function mergeHint(step) {
 
 // ── Component ─────────────────────────────────────────────────────────
 export default function AlgoHint({ algoKey, step }) {
-  if (algoKey !== 'quick' && algoKey !== 'merge') return null
   if (!step) return null
 
-  const { text, color } = algoKey === 'quick' ? quickHint(step) : mergeHint(step)
+  const hintFn = {
+    bubble:    bubbleHint,
+    selection: selectionHint,
+    insertion: insertionHint,
+    quick:     quickHint,
+    merge:     mergeHint,
+  }[algoKey]
+
+  if (!hintFn) return null
+
+  const { text, color } = hintFn(step)
 
   return (
     <div
-      className="flex items-center gap-2 px-3 py-2 mx-0 rounded-lg border text-xs font-mono shrink-0"
+      className="flex items-center gap-2 px-3 mx-0 border text-xs font-mono shrink-0"
       style={{
-        background:  `${color}0d`,
-        borderColor: `${color}33`,
-        color:       color,
-        minHeight:   32,
-        transition:  'background 200ms ease, border-color 200ms ease, color 200ms ease',
+        background:   `${color}0d`,
+        borderColor:  `${color}33`,
+        borderWidth:  '0 0 1px 0',
+        color:        color,
+        height:       36,
+        minHeight:    36,
+        maxHeight:    36,
+        overflow:     'hidden',
+        transition:   'background 200ms ease, border-color 200ms ease, color 200ms ease',
       }}
     >
       {/* Colored dot */}
