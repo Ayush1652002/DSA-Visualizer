@@ -1,17 +1,8 @@
 import { useState, useEffect } from 'react'
 import Stack from '../components/Stack.jsx'
 import Queue from '../components/Queue.jsx'
+import { useIsDesktop } from '../hooks/useIsDesktop.js'
 
-function useIsDesktop() {
-  const [v, setV] = useState(() => window.innerWidth >= 768)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const h = e => setV(e.matches)
-    mq.addEventListener('change', h)
-    return () => mq.removeEventListener('change', h)
-  }, [])
-  return v
-}
 
 const ACCENT = '#22d3ee'
 

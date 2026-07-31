@@ -3,6 +3,7 @@ import GraphCanvas from '../components/GraphCanvas.jsx'
 import CodeViewer  from '../components/CodeViewer.jsx'
 import { bfsCode, runGraphBFS } from '../algorithms/graph/bfs.js'
 import { dfsCode, runGraphDFS } from '../algorithms/graph/dfs.js'
+import { useIsDesktop } from '../hooks/useIsDesktop.js'
 
 const ACCENT = '#22d3ee'
 const SPEEDS = { slow: 800, medium: 250, fast: 60 }
@@ -69,16 +70,6 @@ function makeDefaultGraph(canvasW, canvasH) {
   return { nodes, edges }
 }
 
-function useIsDesktop() {
-  const [v, setV] = useState(() => window.innerWidth >= 768)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const h = e => setV(e.matches)
-    mq.addEventListener('change', h)
-    return () => mq.removeEventListener('change', h)
-  }, [])
-  return v
-}
 
 let nodeCounter = 0
 const MANUAL_LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'

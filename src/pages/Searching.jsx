@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { linearCode, generateLinearSteps } from '../algorithms/searching/linear.js'
 import { binaryCode, generateBinarySteps } from '../algorithms/searching/binary.js'
 import CodeViewer from '../components/CodeViewer.jsx'
+import { useIsDesktop } from '../hooks/useIsDesktop.js'
 
 // ── Colors ────────────────────────────────────────────────────────
 const CYAN   = '#22d3ee'   // current index being checked
@@ -15,16 +16,6 @@ function makeArray(n) {
   return Array.from({ length: n }, () => Math.floor(Math.random() * 88) + 8)
 }
 
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const h = (e) => setIsDesktop(e.matches)
-    mq.addEventListener('change', h)
-    return () => mq.removeEventListener('change', h)
-  }, [])
-  return isDesktop
-}
 
 const ALGORITHMS = {
   linear: { name: 'Linear Search', color: CYAN,   code: linearCode },

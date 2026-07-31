@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import Navbar    from '../components/Navbar.jsx'
+import { useState } from 'react'
 import Bars       from '../components/Bars.jsx'
 import CodeViewer from '../components/CodeViewer.jsx'
 import Controls   from '../components/Controls.jsx'
@@ -9,6 +8,8 @@ import { selectionCode, generateSelectionSteps } from '../algorithms/selection.j
 import { insertionCode, generateInsertionSteps } from '../algorithms/insertion.js'
 import { mergeCode,     generateMergeSteps     } from '../algorithms/merge.js'
 import { quickCode,     generateQuickSteps     } from '../algorithms/quick.js'
+import { useSortingVisualizer, MIN_SIZE, MAX_SIZE } from '../hooks/useSortingVisualizer.js'
+import { useIsDesktop } from '../hooks/useIsDesktop.js'
 
 const ALGORITHMS = {
   bubble:    { name: 'Bubble',    color: '#22d3ee', code: bubbleCode,    gen: generateBubbleSteps    },
@@ -18,130 +19,32 @@ const ALGORITHMS = {
   quick:     { name: 'Quick',     color: '#fb7185', code: quickCode,     gen: generateQuickSteps     },
 }
 
-const SPEEDS   = { slow: 650, medium: 220, fast: 60 }
-const MIN_SIZE = 4
-const MAX_SIZE = 60
-
-function makeArray(n) {
-  return Array.from({ length: n }, () => Math.floor(Math.random() * 88) + 8)
-}
-
-// Simple hook to track if we're on desktop (>=768px)
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const handler = (e) => setIsDesktop(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return isDesktop
-}
-
 export default function Sorting() {
-  const [algoKey,     setAlgoKey]     = useState('bubble')
-  const [arraySize,   setArraySize]   = useState(13)
-  const [speedKey,    setSpeedKey]    = useState('medium')
-  const [baseArr,     setBaseArr]     = useState(() => makeArray(13))
-  const [steps,       setSteps]       = useState([])
-  const [stepIdx,     setStepIdx]     = useState(0)
-  const [running,     setRunning]     = useState(false)
-  const [finished,    setFinished]    = useState(false)
-  const [customInput, setCustomInput] = useState('')
-  const [inputError,  setInputError]  = useState('')
-  const timerRef   = useRef(null)
-  const isDesktop  = useIsDesktop()
+  const [algoKey, setAlgoKey] = useState('bubble')
+  const isDesktop = useIsDesktop()
+  const algo = ALGORITHMS[algoKey]
 
-  const algo        = ALGORITHMS[algoKey]
-  const currentStep = steps[stepIdx] ?? {
-    arr: baseArr, comparing: [], swapped: [], sorted: [],
-    pivot: [], boundary: [], mid: [], range: [], line: -2,
+  const {
+    arraySize, speedKey, steps, stepIdx,
+    running, finished, customInput, inputError,
+    currentStep, progress,
+    setSpeedKey, setCustomInput,
+    handleStartPause, handleNextStep, handlePrevStep,
+    handleReset, handleSizeChange, handleGenerateRandom,
+    handleUseCustomInput,
+  } = useSortingVisualizer(algo)
+
+  function handleAlgoChange(key) {
+    setAlgoKey(key)
   }
 
-  useEffect(() => {
-    clearInterval(timerRef.current)
-    setRunning(false); setFinished(false)
-    setSteps(algo.gen(baseArr)); setStepIdx(0)
-  }, [algoKey, baseArr])
-
-  useEffect(() => {
-    if (!running) { clearInterval(timerRef.current); return }
-    timerRef.current = setInterval(() => {
-      setStepIdx((prev) => {
-        if (prev >= steps.length - 1) {
-          clearInterval(timerRef.current); setRunning(false); setFinished(true); return prev
-        }
-        return prev + 1
-      })
-    }, SPEEDS[speedKey])
-    return () => clearInterval(timerRef.current)
-  }, [running, steps.length, speedKey])
-
-  const stop = useCallback(() => {
-    clearInterval(timerRef.current); setRunning(false); setFinished(false)
-  }, [])
-
-  const handleAlgoChange     = useCallback((key) => { stop(); setAlgoKey(key) }, [stop])
-  const handleStartPause     = useCallback(() => {
-    if (finished) { setBaseArr(makeArray(arraySize)); return }
-    if (stepIdx >= steps.length - 1) { setFinished(true); return }
-    setRunning((r) => !r)
-  }, [finished, stepIdx, steps.length, arraySize])
-  const handleNextStep       = useCallback(() => {
-    if (running) setRunning(false)
-    setStepIdx((prev) => {
-      const next = Math.min(prev + 1, steps.length - 1)
-      if (next >= steps.length - 1) setFinished(true)
-      return next
-    })
-  }, [running, steps.length])
-  const handlePrevStep       = useCallback(() => {
-    if (running) setRunning(false)
-    setFinished(false)
-    setStepIdx((prev) => Math.max(prev - 1, 0))
-  }, [running])
-  const handleReset          = useCallback(() => {
-    stop(); setBaseArr(makeArray(arraySize)); setCustomInput(''); setInputError('')
-  }, [arraySize, stop])
-  const handleSizeChange     = useCallback((n) => {
-    stop(); setArraySize(n); setBaseArr(makeArray(n)); setCustomInput(''); setInputError('')
-  }, [stop])
-  const handleGenerateRandom = useCallback(() => {
-    stop(); setBaseArr(makeArray(arraySize)); setCustomInput(''); setInputError('')
-  }, [arraySize, stop])
-  const handleUseCustomInput = useCallback(() => {
-    if (!customInput.trim()) { setInputError('Input is empty.'); return }
-    const parsed = customInput.split(',')
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n) && n > 0 && n <= 999)
-    if (parsed.length < 2)       { setInputError('Enter at least 2 valid numbers (1–999).'); return }
-    if (parsed.length > MAX_SIZE) { setInputError(`Max ${MAX_SIZE} values allowed.`); return }
-    setInputError(''); stop(); setArraySize(parsed.length); setBaseArr(parsed)
-  }, [customInput, stop])
-
-  const comparingCount = currentStep.comparing?.length ?? 0
-  const swappedCount   = currentStep.swapped?.length   ?? 0
-  const sortedCount    = currentStep.sorted?.length    ?? 0
-  const progress       = steps.length > 1
-    ? Math.round((stepIdx / (steps.length - 1)) * 100) : 0
-
-  // ─── Layout dimensions ────────────────────────────────────────────
-  // Code panel: 260px wide on desktop (sidebar), 200px tall on mobile (top strip)
   const codePanelStyle = isDesktop
     ? { width: 260, height: '100%', flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.1)' }
     : { width: '100%', height: 140, flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)' }
 
   return (
-    // position:fixed + inset:0 gives a guaranteed concrete pixel height so
-    // every flex-1 child resolves correctly on all browsers / screen sizes.
-    <div
-      className="flex flex-col bg-[#060d1b] text-slate-200 font-sans"
-      style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}
-    >
-      {/* ── Row 1: Same navbar as all other pages ─────────────── */}
-      <Navbar />
-
-      {/* ── Row 2: Algo tabs + step counter ────────────────────── */}
+    <>
+      {/* Algo tabs */}
       <div className="flex shrink-0 bg-white/[0.03] border-b border-white/10"
         style={{ overflowX: 'auto', overflowY: 'hidden' }}>
         {Object.entries(ALGORITHMS).map(([key, a]) => (
@@ -164,7 +67,7 @@ export default function Sorting() {
         </span>
       </div>
 
-      {/* ── Controls ───────────────────────────────────────────── */}
+      {/* Controls */}
       <Controls
         running={running} finished={finished}
         stepIdx={stepIdx} totalSteps={steps.length} progress={progress}
@@ -177,21 +80,14 @@ export default function Sorting() {
         onUseCustomInput={handleUseCustomInput} onGenerateRandom={handleGenerateRandom}
       />
 
-      {/* ── Main body ──────────────────────────────────────────────
-           flex-1 resolves correctly because parent is position:fixed.
-           isDesktop → row layout. mobile → column layout.
-      ─────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          flex:     1,
-          display:  'flex',
-          flexDirection: isDesktop ? 'row' : 'column',
-          overflow: 'hidden',
-          minHeight: 0,
-        }}
-      >
+      {/* Main body */}
+      <div style={{
+        flex: 1, display: 'flex',
+        flexDirection: isDesktop ? 'row' : 'column',
+        overflow: 'hidden', minHeight: 0,
+      }}>
 
-        {/* Code panel — exact pixel sizes, no ambiguity */}
+        {/* Code panel */}
         <div style={{ ...codePanelStyle, overflow: 'hidden' }}>
           <CodeViewer
             code={algo.code}
@@ -200,21 +96,13 @@ export default function Sorting() {
           />
         </div>
 
-        {/* Bars panel — takes ALL remaining space */}
-        <div
-          style={{
-            flex:     1,
-            display:  'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            minWidth: 0,
-            minHeight: 0,
-          }}
-        >
-          {/* Hint bar — plain English description of current step (Quick + Merge only) */}
+        {/* Bars panel */}
+        <div style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          overflow: 'hidden', minWidth: 0, minHeight: 0,
+        }}>
           <AlgoHint algoKey={algoKey} step={currentStep} />
 
-          {/* Bar card */}
           <div style={{ flex: 1, padding: isDesktop ? 16 : 6, overflow: 'hidden', minHeight: isDesktop ? 0 : 220 }}>
             <div
               className="rounded-xl border border-white/10 bg-white/5"
@@ -235,7 +123,7 @@ export default function Sorting() {
             </div>
           </div>
 
-          {/* Footer — color legend */}
+          {/* Footer legend */}
           <div
             className="flex items-center border-t border-white/10 bg-white/5 shrink-0 flex-wrap"
             style={{ padding: '0 16px', gap: '16px', height: 36, minHeight: 36, maxHeight: 36, overflow: 'hidden' }}
@@ -263,15 +151,13 @@ export default function Sorting() {
                 <span style={{ fontSize: 12, color: '#94a3b8' }}>{label}</span>
               </div>
             ))}
-
             <span style={{ marginLeft: 'auto', fontSize: 11, color: '#475569', fontFamily: 'monospace' }}>
               step <strong style={{ color: '#64748b' }}>{stepIdx}</strong> / {steps.length - 1}
             </span>
             {finished && <span style={{ fontSize: 12, fontWeight: 700, color: '#4ade80' }}>✓ Sorted!</span>}
           </div>
         </div>
-
       </div>
-    </div>
+    </>
   )
 }

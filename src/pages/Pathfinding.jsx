@@ -4,6 +4,7 @@ import CodeViewer from '../components/CodeViewer.jsx'
 import { bfsCode, runBFS } from '../algorithms/pathfinding/bfs.js'
 import { dfsCode, runDFS } from '../algorithms/pathfinding/dfs.js'
 import { generateMaze }    from '../algorithms/pathfinding/maze.js'
+import { useIsDesktop } from '../hooks/useIsDesktop.js'
 
 const ACCENT = '#22d3ee'
 const SPEEDS = {
@@ -27,16 +28,6 @@ const PRESETS = {
   spiral:   'Spiral',
 }
 
-function useIsDesktop() {
-  const [v, setV] = useState(() => window.innerWidth >= 768)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const h = e => setV(e.matches)
-    mq.addEventListener('change', h)
-    return () => mq.removeEventListener('change', h)
-  }, [])
-  return v
-}
 
 function makeGrid(rows, cols) {
   return Array.from({ length: rows }, () => Array(cols).fill('empty'))
