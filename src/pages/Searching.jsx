@@ -3,12 +3,13 @@ import { linearCode, generateLinearSteps } from '../algorithms/searching/linear.
 import { binaryCode, generateBinarySteps } from '../algorithms/searching/binary.js'
 import CodeViewer from '../components/CodeViewer.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
+import SearchBars from '../components/SearchBars.jsx'
+import { usePageTitle } from '../hooks/usePageTitle.js'
 
-// ── Colors ────────────────────────────────────────────────────────
 const CYAN   = '#22d3ee'   // current index being checked
 const PURPLE = '#a78bfa'   // mid pointer (binary)
 const GREEN  = '#4ade80'   // found
-const DIMMED = '#0d1b2e'   // same as default bar color — not too dark
+const DIMMED = '#0d1b2e'
 
 const SPEEDS = { slow: 700, medium: 250, fast: 60 }
 
@@ -36,6 +37,7 @@ export default function Searching() {
   const [arrErr,    setArrErr]    = useState('')
   const timerRef  = useRef(null)
   const isDesktop = useIsDesktop()
+  usePageTitle('Searching')
 
   const algo        = ALGORITHMS[algoKey]
   const currentStep = steps[stepIdx] ?? { line: -2, current: -1, found: -1, mid: -1, low: -1, high: -1, done: false }
@@ -173,22 +175,36 @@ export default function Searching() {
       style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}
     >
       {/* ── Algorithm tabs ── */}
-      <div className="flex shrink-0 overflow-x-auto bg-white/[0.03] border-b border-white/10">
-        {Object.entries(ALGORITHMS).map(([key, a]) => (
-          <button key={key}
-            onClick={() => { setAlgoKey(key); resetAll() }}
-            className="px-4 md:px-5 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap shrink-0 transition-all duration-200"
-            style={{
-              border:       'none',
-              borderBottom: `2px solid ${algoKey === key ? a.color : 'transparent'}`,
-              background:   algoKey === key ? `${a.color}15` : 'transparent',
-              color:        algoKey === key ? a.color : '#4b5563',
-              cursor:       'pointer',
-            }}>
-            {a.name}
-          </button>
-        ))}
-      </div>
+      <div
+  role="tablist"
+  aria-label="Select searching algorithm"
+  className="flex shrink-0 overflow-x-auto bg-white/[0.03] border-b border-white/10"
+  onKeyDown={(e) => {
+    const keys = Object.keys(ALGORITHMS)
+    const currentIndex = keys.indexOf(algoKey)
+    if (e.key === 'ArrowRight') { setAlgoKey(keys[(currentIndex + 1) % keys.length]); resetAll() }
+    if (e.key === 'ArrowLeft')  { setAlgoKey(keys[(currentIndex - 1 + keys.length) % keys.length]); resetAll() }
+  }}
+>
+  {Object.entries(ALGORITHMS).map(([key, a]) => (
+    <button
+      key={key}
+      role="tab"
+      aria-selected={algoKey === key}
+      tabIndex={algoKey === key ? 0 : -1}
+      onClick={() => { setAlgoKey(key); resetAll() }}
+      className="px-4 md:px-5 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap shrink-0 transition-all duration-200"
+      style={{
+        border:       'none',
+        borderBottom: `2px solid ${algoKey === key ? a.color : 'transparent'}`,
+        background:   algoKey === key ? `${a.color}15` : 'transparent',
+        color:        algoKey === key ? a.color : '#4b5563',
+        cursor:       'pointer',
+      }}>
+      {a.name}
+    </button>
+  ))}
+</div>
 
       {/* ── Controls ── */}
       <div
@@ -294,7 +310,7 @@ export default function Searching() {
             </button>
           </div>
         </div>
-        {arrErr && <p className="text-xs font-mono text-red-400">⚠ {arrErr}</p>}
+        {arrErr && <p role="alert" style={{ fontSize: 10, fontFamily: 'monospace', color: '#f87171', margin: 0 }}>⚠ {arrErr}</p>}
 
         {/* Row 3: progress bar */}
         {steps.length > 0 && (
@@ -312,9 +328,7 @@ export default function Searching() {
 
         {/* Error */}
         {inputErr && (
-          <p className="text-xs font-mono text-red-400 flex items-center gap-1">
-            <span>⚠</span> {inputErr}
-          </p>
+          <p role="alert" style={{ fontSize: 10, fontFamily: 'monospace', color: '#f87171', margin: 0 }}>⚠ {inputErr}</p>
         )}
       </div>
 
@@ -330,6 +344,7 @@ export default function Searching() {
             code={algo.code}
             activeLine={currentStep.line}
             accentColor={algo.color}
+            completionMessage="✓ Search Complete!"
           />
         </div>
 
@@ -390,80 +405,3 @@ export default function Searching() {
   )
 }
 
-// ── Simple bar renderer (no swap animation needed for search) ─────
-function SearchBars({ arr, getColor, max }) {
-  const containerRef = useRef(null)
-  const [size, setSize] = useState({ w: 0, h: 0 })
-
-  useEffect(() => {
-    if (!containerRef.current) return
-    const ro = new ResizeObserver(([e]) => {
-      setSize({ w: e.contentRect.width, h: e.contentRect.height })
-    })
-    ro.observe(containerRef.current)
-    return () => ro.disconnect()
-  }, [])
-
-  const { w, h } = size
-  const n   = arr.length
-  const gap = 3
-  const barW = Math.min(60, Math.max(2, (w - gap * (n - 1)) / n))
-  const totalW = barW * n + gap * (n - 1)
-  const offsetX = (w - totalW) / 2
-
-  function barBg(color) {
-    if (!color || color === DIMMED) return 'linear-gradient(to top, #0d1f3c, #163354)'
-    return `linear-gradient(to top, ${color}88, ${color})`
-  }
-
-  return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%', paddingTop: 20, boxSizing: 'border-box' }}>
-      {w > 0 && arr.map((val, idx) => {
-        const color = getColor(idx)
-        const barH  = Math.max(2, (val / max) * h)
-        const left  = offsetX + idx * (barW + gap)
-        const top   = h - barH
-        const labelColor = color && color !== DIMMED ? color : '#334155'
-
-        return (
-          <div
-            key={idx}
-            style={{ position: 'absolute', left, top: top - 18, width: barW }}
-          >
-            {/* Value label */}
-            {barW >= 12 && (
-              <div style={{
-                width:      '100%',
-                textAlign:  'center',
-                fontSize:   Math.min(11, Math.max(8, barW * 0.45)),
-                fontFamily: 'monospace',
-                color:      labelColor,
-                fontWeight: color && color !== DIMMED ? 700 : 400,
-                height:     18,
-                lineHeight: '18px',
-                transition: 'color 150ms ease',
-                userSelect: 'none',
-                pointerEvents: 'none',
-              }}>
-                {val}
-              </div>
-            )}
-            {/* Bar */}
-            <div
-              style={{
-                width:        barW,
-                height:       barH,
-                background:   barBg(color),
-                boxShadow:    color && color !== DIMMED ? `0 0 10px ${color}77` : 'none',
-                border:       color && color !== DIMMED ? `1px solid ${color}55` : 'none',
-                borderRadius: '6px 6px 0 0',
-                boxSizing:    'border-box',
-                transition:   'background 150ms ease, box-shadow 150ms ease',
-              }}
-            />
-          </div>
-        )
-      })}
-    </div>
-  )
-}

@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
+import ErrorBoundary from '../components/ErrorBoundary.jsx'
 
 export default function AppLayout() {
   return (
@@ -8,7 +9,9 @@ export default function AppLayout() {
       style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}
     >
       <Navbar />
-      <Outlet />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
     </div>
   )
 }

@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import Stack from '../components/Stack.jsx'
 import Queue from '../components/Queue.jsx'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
+import { usePageTitle } from '../hooks/usePageTitle.js'
 
 
 const ACCENT = '#22d3ee'
 
 export default function StackQueue() {
   const isDesktop = useIsDesktop()
+  usePageTitle('Stack & Queue')
   const [tab, setTab] = useState('both')  // 'stack' | 'queue' | 'both'
 
   return (

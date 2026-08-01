@@ -4,6 +4,7 @@ import CodeViewer  from '../components/CodeViewer.jsx'
 import { bfsCode, runGraphBFS } from '../algorithms/graph/bfs.js'
 import { dfsCode, runGraphDFS } from '../algorithms/graph/dfs.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
+import { usePageTitle } from '../hooks/usePageTitle.js'
 
 const ACCENT = '#22d3ee'
 const SPEEDS = { slow: 800, medium: 250, fast: 60 }
@@ -71,11 +72,13 @@ function makeDefaultGraph(canvasW, canvasH) {
 }
 
 
-let nodeCounter = 0
+
 const MANUAL_LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 export default function Graph() {
+  const nodeCounterRef = useRef(0)
   const isDesktop = useIsDesktop()
+  usePageTitle('Graph Traversal')
   const baseW     = isDesktop ? 680 : 480
   const defGraph  = makeDefaultGraph(baseW, 580)
 
@@ -103,7 +106,7 @@ export default function Graph() {
     const usedLabels = new Set(defGraph.nodes.map(n => n.id))
     let i = 0
     while (usedLabels.has(MANUAL_LABELS[i % 26])) i++
-    nodeCounter = i
+    nodeCounterRef.current = i
   }, [])
 
   const timerRef   = useRef(null)
@@ -175,7 +178,7 @@ export default function Graph() {
     const g = makeDefaultGraph(canvasW, 580)
     setNodes(g.nodes); setEdges(g.edges)
     setStartNode('A'); setSelected(null)
-    nodeCounter = g.nodes.length  // A-F = 6 nodes, next is G
+    nodeCounterRef.current = g.nodes.length  // A-F = 6 nodes, next is G
     setArrayInput('')
   }
 
@@ -183,7 +186,7 @@ export default function Graph() {
     resetViz()
     setNodes([]); setEdges([])
     setSelected(null); setStartNode(null)
-    nodeCounter = 0
+    nodeCounterRef.current = 0
   }
 
   // ── Build tree from array input ─────────────────────────────
@@ -198,7 +201,7 @@ export default function Graph() {
     const { nodes: n, edges: e, startId } = buildTreeFromArray(vals, canvasW, canvasH)
     setNodes(n); setEdges(e)
     setStartNode(startId)
-    nodeCounter = n.length
+    nodeCounterRef.current = n.length
     setSelected(null)
   }
 
@@ -265,9 +268,9 @@ export default function Graph() {
     resetViz()
     // Find next unused label
     const usedIds = new Set(nodes.map(n => n.id))
-    while (usedIds.has(MANUAL_LABELS[nodeCounter % 26])) nodeCounter++
-    const id = MANUAL_LABELS[nodeCounter % 26]
-    nodeCounter++
+    while (usedIds.has(MANUAL_LABELS[nodeCounterRef.current % 26])) nodeCounterRef.current++
+    const id = MANUAL_LABELS[nodeCounterRef.current % 26]
+    nodeCounterRef.current++
     const newNode = { id, label: id, x: Math.round(x), y: Math.round(y) }
     setNodes(prev => [...prev, newNode])
     if (!startNode) setStartNode(newNode.id)
@@ -312,16 +315,30 @@ export default function Graph() {
       style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
       {/* Algorithm tabs */}
-      <div className="flex shrink-0 overflow-x-auto bg-white/[0.03] border-b border-white/10">
-        {Object.entries(ALGO).map(([key, a]) => (
-          <button key={key} onClick={() => { setAlgoKey(key); resetViz() }}
-            className="px-5 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap shrink-0"
-            style={{ border: 'none', borderBottom: `2px solid ${algoKey === key ? a.color : 'transparent'}`, background: algoKey === key ? `${a.color}15` : 'transparent', color: algoKey === key ? a.color : '#4b5563', cursor: 'pointer', transition: 'all 0.15s' }}>
-            {a.name}
-          </button>
-        ))}
-        <span className="flex items-center ml-4 text-xs font-mono text-slate-600 hidden md:flex">{algo.desc}</span>
-      </div>
+      <div
+  role="tablist"
+  aria-label="Select graph algorithm"
+  className="flex shrink-0 overflow-x-auto bg-white/[0.03] border-b border-white/10"
+  onKeyDown={(e) => {
+    const keys = Object.keys(ALGO)
+    const currentIndex = keys.indexOf(algoKey)
+    if (e.key === 'ArrowRight') { setAlgoKey(keys[(currentIndex + 1) % keys.length]); resetViz() }
+    if (e.key === 'ArrowLeft')  { setAlgoKey(keys[(currentIndex - 1 + keys.length) % keys.length]); resetViz() }
+  }}
+>
+  {Object.entries(ALGO).map(([key, a]) => (
+    <button key={key}
+      role="tab"
+      aria-selected={algoKey === key}
+      tabIndex={algoKey === key ? 0 : -1}
+      onClick={() => { setAlgoKey(key); resetViz() }}
+      className="px-5 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap shrink-0"
+      style={{ border: 'none', borderBottom: `2px solid ${algoKey === key ? a.color : 'transparent'}`, background: algoKey === key ? `${a.color}15` : 'transparent', color: algoKey === key ? a.color : '#4b5563', cursor: 'pointer', transition: 'all 0.15s' }}>
+      {a.name}
+    </button>
+  ))}
+  <span className="flex items-center ml-4 text-xs font-mono text-slate-600 hidden md:flex">{algo.desc}</span>
+</div>
 
       {/* Controls */}
       <div className="flex items-center gap-2 px-3 md:px-6 py-2 bg-white/5 border-b border-white/10 shrink-0"
@@ -403,7 +420,7 @@ export default function Graph() {
             Build Tree
           </button>
         </div>
-        {arrayErr && <span className="text-xs font-mono text-red-400">⚠ {arrayErr}</span>}
+        {arrayErr && <p role="alert" style={{ fontSize: 10, fontFamily: 'monospace', color: '#f87171', margin: 0 }}>⚠ {arrayErr}</p>}
         <span className="text-xs font-mono text-slate-700 hidden md:block">or click canvas to add nodes manually</span>
       </div>
 
@@ -461,7 +478,7 @@ export default function Graph() {
 
         {/* Code panel */}
         <div style={codePanelStyle}>
-          <CodeViewer code={algo.code} activeLine={activeLine} accentColor={algo.color} />
+          <CodeViewer code={algo.code} activeLine={activeLine} accentColor={algo.color} completionMessage="✓ Traversal Complete!"/>
         </div>
 
         {/* Canvas */}

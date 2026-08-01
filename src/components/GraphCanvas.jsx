@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useMemo } from 'react'
 import Node from './Node.jsx'
 import Edge from './Edge.jsx'
 
@@ -122,7 +122,10 @@ export default function GraphCanvas({
 
   const scaledW = width  * scale
   const scaledH = height * scale
-
+  const nodeMap = useMemo(
+  () => Object.fromEntries(nodes.map(n => [n.id, n])),
+  [nodes]
+  )
   return (
     // Outer div carries the scaled dimensions so parent scroll knows true size
     <div style={{ width: scaledW, height: scaledH, flexShrink: 0, position: 'relative' }}>
@@ -155,7 +158,7 @@ export default function GraphCanvas({
         <rect width={width} height={height} fill="url(#grid)" rx={12} />
 
         {edges.map((edge, i) => (
-          <Edge key={i} edge={edge} nodes={nodes}
+          <Edge key={i} edge={edge} nodeMap={nodeMap}
             isActive={isEdgeActive(edge)}
             isVisited={isEdgeVisited(edge)} />
         ))}

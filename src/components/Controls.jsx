@@ -18,18 +18,21 @@ export default function Controls({
       {/* Row 1: playback + speed inline */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'nowrap', overflowX: 'auto' }}>
         <button onClick={onStartPause}
+          aria-label={finished ? 'Reset' : running ? 'Pause' : 'Start visualization'}
           style={{ padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, fontFamily: 'monospace', background: running ? 'transparent' : accentColor, color: running ? accentColor : '#000', border: `1px solid ${accentColor}`, boxShadow: running ? 'none' : `0 0 10px ${accentColor}44`, cursor: 'pointer', flexShrink: 0 }}>
           {primaryLabel}
         </button>
-        <button onClick={onPrevStep} disabled={stepIdx === 0}
+        <button onClick={onPrevStep}
+        aria-label="Previous step" disabled={stepIdx === 0}
           style={{ padding: '6px 9px', borderRadius: 8, fontSize: 11, fontWeight: 600, fontFamily: 'monospace', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', cursor: 'pointer', opacity: stepIdx === 0 ? 0.3 : 1, flexShrink: 0 }}>
           ← Prev
         </button>
-        <button onClick={onNextStep} disabled={finished}
+        <button onClick={onNextStep} aria-label="Next step" disabled={finished}
           style={{ padding: '6px 9px', borderRadius: 8, fontSize: 11, fontWeight: 600, fontFamily: 'monospace', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', cursor: 'pointer', opacity: finished ? 0.3 : 1, flexShrink: 0 }}>
           Next →
         </button>
         <button onClick={onReset}
+          aria-label="Generate new array"
           style={{ padding: '6px 9px', borderRadius: 8, fontSize: 11, fontWeight: 600, fontFamily: 'monospace', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#64748b', cursor: 'pointer', flexShrink: 0 }}>
           ↺ New
         </button>
@@ -94,7 +97,7 @@ export default function Controls({
       </div>
 
       {inputError && (
-        <p style={{ fontSize: 10, fontFamily: 'monospace', color: '#f87171', margin: 0 }}>⚠ {inputError}</p>
+        <p role="alert" style={{ fontSize: 10, fontFamily: 'monospace', color: '#f87171', margin: 0 }}>⚠ {inputError}</p>
       )}
     </div>
   )

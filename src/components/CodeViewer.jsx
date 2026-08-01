@@ -5,7 +5,7 @@
 
 import { useRef, useEffect } from 'react'
 
-export default function CodeViewer({ code, activeLine, accentColor }) {
+export default function CodeViewer({ code, activeLine, accentColor, completionMessage = '✓ Complete!' }) {
   const activeRef = useRef(null)
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function CodeViewer({ code, activeLine, accentColor }) {
 
         {activeLine === -1 && (
           <div className="mx-3 mt-3 px-3 py-2 rounded-lg text-xs font-mono text-center text-green-400 bg-green-500/10 border border-green-500/20">
-            ✓ Array Sorted!
+            {completionMessage}
           </div>
         )}
       </div>

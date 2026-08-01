@@ -1,8 +1,9 @@
 // Edge.jsx — a graph edge rendered as SVG line
 
-export default function Edge({ edge, nodes, isActive, isVisited }) {
-  const from = nodes.find(n => n.id === edge.from)
-  const to   = nodes.find(n => n.id === edge.to)
+export default function Edge({ edge, nodeMap, isActive, isVisited }) {
+  const from = nodeMap[edge.from]
+  const to   = nodeMap[edge.to]
+  
   if (!from || !to) return null
 
   const stroke = isActive  ? '#22d3ee'

@@ -10,18 +10,21 @@ import { mergeCode,     generateMergeSteps     } from '../algorithms/merge.js'
 import { quickCode,     generateQuickSteps     } from '../algorithms/quick.js'
 import { useSortingVisualizer, MIN_SIZE, MAX_SIZE } from '../hooks/useSortingVisualizer.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts.js'
+import { usePageTitle } from '../hooks/usePageTitle.js'
 
 const ALGORITHMS = {
-  bubble:    { name: 'Bubble',    color: '#22d3ee', code: bubbleCode,    gen: generateBubbleSteps    },
-  selection: { name: 'Selection', color: '#a78bfa', code: selectionCode, gen: generateSelectionSteps },
-  insertion: { name: 'Insertion', color: '#34d399', code: insertionCode, gen: generateInsertionSteps },
-  merge:     { name: 'Merge',     color: '#38bdf8', code: mergeCode,     gen: generateMergeSteps     },
-  quick:     { name: 'Quick',     color: '#fb7185', code: quickCode,     gen: generateQuickSteps     },
+  bubble:    { name: 'Bubble',    color: '#22d3ee', code: bubbleCode,    gen: generateBubbleSteps,    timeAvg: 'O(n²)',      timeBest: 'O(n)',        space: 'O(1)',    stable: true  },
+  selection: { name: 'Selection', color: '#a78bfa', code: selectionCode, gen: generateSelectionSteps, timeAvg: 'O(n²)',      timeBest: 'O(n²)',       space: 'O(1)',    stable: false },
+  insertion: { name: 'Insertion', color: '#34d399', code: insertionCode, gen: generateInsertionSteps, timeAvg: 'O(n²)',      timeBest: 'O(n)',        space: 'O(1)',    stable: true  },
+  merge:     { name: 'Merge',     color: '#38bdf8', code: mergeCode,     gen: generateMergeSteps,     timeAvg: 'O(n log n)', timeBest: 'O(n log n)', space: 'O(n)',    stable: true  },
+  quick:     { name: 'Quick',     color: '#fb7185', code: quickCode,     gen: generateQuickSteps,     timeAvg: 'O(n log n)', timeBest: 'O(n log n)', space: 'O(log n)', stable: false },
 }
 
 export default function Sorting() {
   const [algoKey, setAlgoKey] = useState('bubble')
   const isDesktop = useIsDesktop()
+  usePageTitle('Sorting')
   const algo = ALGORITHMS[algoKey]
 
   const {
@@ -34,6 +37,15 @@ export default function Sorting() {
     handleUseCustomInput,
   } = useSortingVisualizer(algo)
 
+  useKeyboardShortcuts({
+  onPlayPause: handleStartPause,
+  onNext:      handleNextStep,
+  onPrev:      handlePrevStep,
+  onReset:     handleReset,
+})
+
+
+
   function handleAlgoChange(key) {
     setAlgoKey(key)
   }
@@ -45,27 +57,42 @@ export default function Sorting() {
   return (
     <>
       {/* Algo tabs */}
-      <div className="flex shrink-0 bg-white/[0.03] border-b border-white/10"
-        style={{ overflowX: 'auto', overflowY: 'hidden' }}>
-        {Object.entries(ALGORITHMS).map(([key, a]) => (
-          <button key={key} onClick={() => handleAlgoChange(key)}
-            className="px-4 md:px-5 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap shrink-0 transition-all duration-200"
-            style={{
-              border:       'none',
-              borderBottom: `2px solid ${algoKey === key ? a.color : 'transparent'}`,
-              background:   algoKey === key ? a.color + '15' : 'transparent',
-              color:        algoKey === key ? a.color : '#4b5563',
-              cursor:       'pointer',
-            }}>
-            {a.name}
-          </button>
-        ))}
-        <div style={{ flex: 1 }} />
-        <span className="text-xs text-slate-500 hidden md:flex items-center px-4">
-          step <strong className="text-slate-300 mx-1">{stepIdx}</strong>
-          <span className="text-slate-700">/ {steps.length - 1}</span>
-        </span>
-      </div>
+      <div
+  role="tablist"
+  aria-label="Select sorting algorithm"
+  className="flex shrink-0 bg-white/[0.03] border-b border-white/10"
+  style={{ overflowX: 'auto', overflowY: 'hidden' }}
+  onKeyDown={(e) => {
+    const keys = Object.keys(ALGORITHMS)
+    const currentIndex = keys.indexOf(algoKey)
+    if (e.key === 'ArrowRight') handleAlgoChange(keys[(currentIndex + 1) % keys.length])
+    if (e.key === 'ArrowLeft')  handleAlgoChange(keys[(currentIndex - 1 + keys.length) % keys.length])
+  }}
+>
+  {Object.entries(ALGORITHMS).map(([key, a]) => (
+    <button
+      key={key}
+      role="tab"
+      aria-selected={algoKey === key}
+      tabIndex={algoKey === key ? 0 : -1}
+      onClick={() => handleAlgoChange(key)}
+      className="px-4 md:px-5 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap shrink-0 transition-all duration-200"
+      style={{
+        border:       'none',
+        borderBottom: `2px solid ${algoKey === key ? a.color : 'transparent'}`,
+        background:   algoKey === key ? a.color + '15' : 'transparent',
+        color:        algoKey === key ? a.color : '#4b5563',
+        cursor:       'pointer',
+      }}>
+      {a.name}
+    </button>
+  ))}
+  <div style={{ flex: 1 }} />
+  <span className="text-xs text-slate-500 hidden md:flex items-center px-4">
+    step <strong className="text-slate-300 mx-1">{stepIdx}</strong>
+    <span className="text-slate-700">/ {steps.length - 1}</span>
+  </span>
+</div>
 
       {/* Controls */}
       <Controls
@@ -93,6 +120,7 @@ export default function Sorting() {
             code={algo.code}
             activeLine={currentStep.line}
             accentColor={algo.color}
+            completionMessage="✓ Array Sorted!"
           />
         </div>
 
@@ -122,6 +150,21 @@ export default function Sorting() {
               />
             </div>
           </div>
+
+          {/* Complexity bar */}
+<div className="flex items-center gap-4 px-4 shrink-0 border-t border-white/10 bg-white/[0.02]"
+  style={{ height: 32, minHeight: 32 }}>
+  <span className="text-xs font-mono text-slate-600">Avg:</span>
+  <span className="text-xs font-mono font-bold" style={{ color: algo.color }}>{algo.timeAvg}</span>
+  <span className="text-xs font-mono text-slate-600">Best:</span>
+  <span className="text-xs font-mono font-bold" style={{ color: algo.color }}>{algo.timeBest}</span>
+  <span className="text-xs font-mono text-slate-600">Space:</span>
+  <span className="text-xs font-mono font-bold" style={{ color: algo.color }}>{algo.space}</span>
+  <span className="text-xs font-mono text-slate-600">Stable:</span>
+  <span className="text-xs font-mono font-bold" style={{ color: algo.stable ? '#4ade80' : '#f87171' }}>
+    {algo.stable ? 'Yes' : 'No'}
+  </span>
+</div>
 
           {/* Footer legend */}
           <div

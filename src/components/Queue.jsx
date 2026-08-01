@@ -1,7 +1,7 @@
 // Queue.jsx — FIFO visualizer
 // Items in a horizontal row, front left, rear right
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 const ACCENT   = '#a78bfa'   // purple for queue
 const FRONT_CLR = '#22d3ee'  // cyan front
@@ -13,40 +13,43 @@ export default function Queue() {
   const [error,    setError]    = useState('')
   const [animIdx,  setAnimIdx]  = useState(null)
   const [animType, setAnimType] = useState(null)  // 'enqueue' | 'dequeue'
+  const animTimerRef = useRef(null)
 
   function enqueue() {
-    const val = input.trim()
-    if (!val) { setError('Enter a value to enqueue'); return }
-    if (items.length >= 8) { setError('Queue is full (max 8)'); return }
-    setError('')
-    setInput('')
-    const newIdx = items.length
-    setItems(prev => [...prev, val])
-    setAnimIdx(newIdx)
-    setAnimType('enqueue')
-    setTimeout(() => { setAnimIdx(null); setAnimType(null) }, 400)
-  }
+  const val = input.trim()
+  if (!val) { setError('Enter a value to enqueue'); return }
+  if (items.length >= 8) { setError('Queue is full (max 8)'); return }
+  setError('')
+  setInput('')
+  const newIdx = items.length
+  setItems(prev => [...prev, val])
+  setAnimIdx(newIdx)
+  setAnimType('enqueue')
+  clearTimeout(animTimerRef.current)
+  animTimerRef.current = setTimeout(() => { setAnimIdx(null); setAnimType(null) }, 400)
+}
 
-  function dequeue() {
-    if (items.length === 0) { setError('Queue is empty'); return }
-    setError('')
-    setAnimIdx(0)
-    setAnimType('dequeue')
-    setTimeout(() => {
-      setItems(prev => prev.slice(1))
-      setAnimIdx(null)
-      setAnimType(null)
-    }, 350)
-  }
+function dequeue() {
+  if (items.length === 0) { setError('Queue is empty'); return }
+  setError('')
+  setAnimIdx(0)
+  setAnimType('dequeue')
+  clearTimeout(animTimerRef.current)
+  animTimerRef.current = setTimeout(() => {
+    setItems(prev => prev.slice(1))
+    setAnimIdx(null)
+    setAnimType(null)
+  }, 350)
+}
 
-  function peek() {
-    if (items.length === 0) { setError('Queue is empty'); return }
-    setError('')
-    setAnimIdx(0)
-    setAnimType('peek')
-    setTimeout(() => { setAnimIdx(null); setAnimType(null) }, 800)
-  }
-
+function peek() {
+  if (items.length === 0) { setError('Queue is empty'); return }
+  setError('')
+  setAnimIdx(0)
+  setAnimType('peek')
+  clearTimeout(animTimerRef.current)
+  animTimerRef.current = setTimeout(() => { setAnimIdx(null); setAnimType(null) }, 800)
+}
   function reset() {
     setItems([]); setInput(''); setError('')
     setAnimIdx(null); setAnimType(null)
@@ -95,7 +98,7 @@ export default function Queue() {
       </div>
 
       {/* Error */}
-      {error && <p className="text-xs font-mono text-red-400">⚠ {error}</p>}
+      {error && <p role="alert" style={{ fontSize: 10, fontFamily: 'monospace', color: '#f87171', margin: 0 }}>⚠ {error}</p>}
 
       {/* Queue visualization */}
       <div

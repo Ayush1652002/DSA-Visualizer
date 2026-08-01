@@ -55,11 +55,11 @@ export default function Bars({
   useEffect(() => {
     const a = swapped[0], b = swapped[1]
     if (a === undefined || b === undefined || a === b) return
+    
     if (barW === 0) return
 
-    const key = `${Math.min(a,b)}-${Math.max(a,b)}`
-    if (key === lastSwapKey.current) return
-    lastSwapKey.current = key
+    const key = `${Math.min(a,b)}-${Math.max(a,b)}-${Date.now()}`
+lastSwapKey.current = key
 
     clearTimeout(timerRef.current)
 

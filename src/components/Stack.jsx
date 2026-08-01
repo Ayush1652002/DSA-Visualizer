@@ -1,52 +1,55 @@
 // Stack.jsx — LIFO visualizer
 // Items stack vertically, top is highlighted, push/pop animate
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 const ACCENT  = '#22d3ee'
 const TOP_CLR = '#fb7185'   // top element highlight
 
 export default function Stack() {
+  const animTimerRef = useRef(null)
   const [items,    setItems]    = useState([])
   const [input,    setInput]    = useState('')
   const [error,    setError]    = useState('')
   const [animIdx,  setAnimIdx]  = useState(null)   // index being animated
   const [animType, setAnimType] = useState(null)   // 'push' | 'pop'
 
-  function push() {
-    const val = input.trim()
-    if (!val) { setError('Enter a value to push'); return }
-    if (items.length >= 10) { setError('Stack is full (max 10)'); return }
-    setError('')
-    setInput('')
-    const newIdx = items.length  // will be at top after push
-    setItems(prev => [...prev, val])
-    setAnimIdx(newIdx)
-    setAnimType('push')
-    setTimeout(() => { setAnimIdx(null); setAnimType(null) }, 400)
-  }
+ function push() {
+  const val = input.trim()
+  if (!val) { setError('Enter a value to push'); return }
+  if (items.length >= 10) { setError('Stack is full (max 10)'); return }
+  setError('')
+  setInput('')
+  const newIdx = items.length
+  setItems(prev => [...prev, val])
+  setAnimIdx(newIdx)
+  setAnimType('push')
+  clearTimeout(animTimerRef.current)
+  animTimerRef.current = setTimeout(() => { setAnimIdx(null); setAnimType(null) }, 400)
+}
 
-  function pop() {
-    if (items.length === 0) { setError('Stack is empty'); return }
-    setError('')
-    const topIdx = items.length - 1
-    setAnimIdx(topIdx)
-    setAnimType('pop')
-    setTimeout(() => {
-      setItems(prev => prev.slice(0, -1))
-      setAnimIdx(null)
-      setAnimType(null)
-    }, 350)
-  }
+function pop() {
+  if (items.length === 0) { setError('Stack is empty'); return }
+  setError('')
+  const topIdx = items.length - 1
+  setAnimIdx(topIdx)
+  setAnimType('pop')
+  clearTimeout(animTimerRef.current)
+  animTimerRef.current = setTimeout(() => {
+    setItems(prev => prev.slice(0, -1))
+    setAnimIdx(null)
+    setAnimType(null)
+  }, 350)
+}
 
-  function peek() {
-    if (items.length === 0) { setError('Stack is empty'); return }
-    setError('')
-    setAnimIdx(items.length - 1)
-    setAnimType('peek')
-    setTimeout(() => { setAnimIdx(null); setAnimType(null) }, 800)
-  }
-
+function peek() {
+  if (items.length === 0) { setError('Stack is empty'); return }
+  setError('')
+  setAnimIdx(items.length - 1)
+  setAnimType('peek')
+  clearTimeout(animTimerRef.current)
+  animTimerRef.current = setTimeout(() => { setAnimIdx(null); setAnimType(null) }, 800)
+}
   function reset() {
     setItems([]); setInput(''); setError('')
     setAnimIdx(null); setAnimType(null)
@@ -98,7 +101,7 @@ export default function Stack() {
       </div>
 
       {/* Error */}
-      {error && <p className="text-xs font-mono text-red-400">⚠ {error}</p>}
+      {error && <p role="alert" style={{ fontSize: 10, fontFamily: 'monospace', color: '#f87171', margin: 0 }}>⚠ {error}</p>}
 
       {/* Stack visualization */}
       <div

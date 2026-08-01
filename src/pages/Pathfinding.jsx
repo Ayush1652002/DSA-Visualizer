@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Grid       from '../components/Grid.jsx'
 import CodeViewer from '../components/CodeViewer.jsx'
 import { bfsCode, runBFS } from '../algorithms/pathfinding/bfs.js'
 import { dfsCode, runDFS } from '../algorithms/pathfinding/dfs.js'
 import { generateMaze }    from '../algorithms/pathfinding/maze.js'
 import { useIsDesktop } from '../hooks/useIsDesktop.js'
+import { usePageTitle } from '../hooks/usePageTitle.js'
 
 const ACCENT = '#22d3ee'
 const SPEEDS = {
@@ -126,6 +127,7 @@ function buildVizData(baseGrid, steps, upTo, start, end) {
 
 export default function Pathfinding() {
   const isDesktop = useIsDesktop()
+  usePageTitle('Pathfinding')
 
   const [gridSize, setGridSize] = useState(isDesktop ? 10 : 10)
   const ROWS      = gridSize
@@ -164,9 +166,10 @@ export default function Pathfinding() {
   useEffect(() => { runningRef.current = running }, [running])
 
   // Viz data
-  const vizData = stepIdx >= 0
-    ? buildVizData(grid, steps, stepIdx, start, end)
-    : { grid: (() => { const g = cloneGrid(grid); g[start.row][start.col] = 'start'; g[end.row][end.col] = 'end'; return g })(), distRatios: {}, directions: {} }
+  const vizData = useMemo(() => stepIdx >= 0
+  ? buildVizData(grid, steps, stepIdx, start, end)
+  : { grid: (() => { const g = cloneGrid(grid); g[start.row][start.col] = 'start'; g[end.row][end.col] = 'end'; return g })(), distRatios: {}, directions: {} }
+, [grid, steps, stepIdx, start, end])
 
   const displayGrid = vizData.grid
   const distRatios  = vizData.distRatios
@@ -566,7 +569,7 @@ export default function Pathfinding() {
 
         {/* Code panel */}
         <div style={codePanelStyle}>
-          <CodeViewer code={algo.code} activeLine={activeLine} accentColor={algo.color} />
+          <CodeViewer code={algo.code} activeLine={activeLine} accentColor={algo.color} completionMessage="✓ Path Found!"/>
         </div>
 
         {/* Grid */}

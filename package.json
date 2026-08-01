@@ -1,7 +1,8 @@
 {
   "name": "dsa-dashboard",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Interactive DSA algorithm visualizer built with React 19",
   "type": "module",
   "scripts": {
     "dev": "vite",

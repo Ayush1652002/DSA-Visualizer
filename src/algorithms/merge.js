@@ -10,58 +10,55 @@ export const mergeCode = [
 ]
 
 export function generateMergeSteps(input) {
-  const steps     = []
-  const arr       = [...input]
-  const n         = arr.length
+  const steps   = []
+  const display = [...input]
+  const n       = input.length
   const sortedSet = new Set()
 
   function push(line, comparing = [], swapped = [], mid = [], range = []) {
     steps.push({
-      line, arr: [...arr], comparing, swapped,
+      line,
+      arr: [...display],
+      comparing, swapped,
       sorted:   [...sortedSet],
       mid, range, pivot: [], boundary: [],
     })
   }
 
   function merge(l, midIdx, r) {
-    // Snapshot BOTH halves into auxiliary arrays before touching arr
-    const L = arr.slice(l,          midIdx + 1)
-    const R = arr.slice(midIdx + 1, r + 1)
-    let i = 0, j = 0, k = l
-
     push(5, [], [], [midIdx], [l, r])
 
-    while (i < L.length && j < R.length) {
-      const idxL = l + i
-      const idxR = midIdx + 1 + j
+    const L = display.slice(l, midIdx + 1)
+    const R = display.slice(midIdx + 1, r + 1)
+    let i = 0, j = 0, k = l
 
-      push(6, [idxL, idxR], [], [midIdx], [l, r])
+    while (i < L.length && j < R.length) {
+      const posL = display.indexOf(L[i], l)
+      const posR = display.indexOf(R[j], midIdx + 1)
+
+      push(6, [posL, posR], [], [midIdx], [l, r])
 
       if (L[i] <= R[j]) {
-        arr[k] = L[i]; i++
-        // Left element placed — highlight only destination (no cross needed)
-        push(7, [], [k], [midIdx], [l, r])
+        if (posL !== k) {
+          push(7, [], [posL, k], [midIdx], [l, r])
+          ;[display[posL], display[k]] = [display[k], display[posL]]
+          push(7, [], [posL, k], [midIdx], [l, r])
+        }
+        i++
       } else {
-        arr[k] = R[j]; j++
-        // Right element crossed over left — show as swap between idxR and k
-        push(7, [], [idxR, k], [midIdx], [l, r])
+        const posR2 = display.indexOf(R[j], k)
+        if (posR2 !== k) {
+          push(7, [], [posR2, k], [midIdx], [l, r])
+          ;[display[posR2], display[k]] = [display[k], display[posR2]]
+          push(7, [], [posR2, k], [midIdx], [l, r])
+        }
+        j++
       }
       k++
     }
 
-    while (i < L.length) {
-      arr[k] = L[i]; i++
-      push(7, [], [k], [midIdx], [l, r])
-      k++
-    }
-
-    while (j < R.length) {
-      arr[k] = R[j]; j++
-      push(7, [], [k], [midIdx], [l, r])
-      k++
-    }
-
     for (let x = l; x <= r; x++) sortedSet.add(x)
+    push(5, [], [], [midIdx], [l, r])
   }
 
   function ms(l, r) {
@@ -73,15 +70,15 @@ export function generateMergeSteps(input) {
     }
     const midIdx = Math.floor((l + r) / 2)
     push(2, [], [], [midIdx], [l, r])
-    push(3, [], [], [midIdx], [l, midIdx]);    ms(l, midIdx)
+    push(3, [], [], [midIdx], [l, midIdx]);     ms(l, midIdx)
     push(4, [], [], [midIdx], [midIdx + 1, r]); ms(midIdx + 1, r)
     merge(l, midIdx, r)
   }
 
   ms(0, n - 1)
   steps.push({
-    line: -1, arr: [...arr], comparing: [], swapped: [],
-    sorted: arr.map((_, i) => i),
+    line: -1, arr: [...display], comparing: [], swapped: [],
+    sorted: display.map((_, i) => i),
     mid: [], range: [], pivot: [], boundary: [],
   })
   return steps
