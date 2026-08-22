@@ -450,7 +450,9 @@ export default function Graph() {
           {/* Live Queue/Stack display */}
           {dataSize > 0 && (
             <div className="flex items-center gap-2 text-xs font-mono">
-              <span className="text-slate-600">{algo.dataLabel}:</span>
+              <span className="text-slate-600">
+  {algoKey === 'bfs' ? 'Visited' : algo.dataLabel}:
+</span>
               <div className="flex items-center gap-1">
                 {(currentStep?.visitedNodes ?? []).slice(-6).map((nid, i) => (
                   <span key={i} className="px-1.5 py-0.5 rounded font-bold"
